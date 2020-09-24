@@ -1,20 +1,35 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/", homeHandler)
+var users []*User
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+func main() {
+	users = append(users, &User{Name: "Eli"})
+
+	r := gin.Default()
+	r.GET("/", homeHandler)
+	r.POST("/user", create)
+	r.GET("/user", get)
+
+	r.Run(":8080")
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "home")
+func homeHandler(c *gin.Context) {
+	c.JSON(
+		200,
+		gin.H{"message": "hello"},
+	)
+}
+
+func create(c *gin.Context) {
+	var user User
+	c.ShouldBind(&user)
+	users = append(users, &user)
+}
+
+func get(c *gin.Context) {
+	c.JSON(200, users)
 }
