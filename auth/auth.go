@@ -5,13 +5,13 @@ type AuthService struct {
 }
 
 type Token struct {
-	userID  int
-	tokenID int
-	expiry  int
+	UserID  int
+	TokenID int
+	Expiry  int
 }
 
 type Login struct {
-	userID   int    `json:"userID"`
-	Email    string `json:"name"`
+	UserID   int    `json:"userID"`
+	Email    string `json:"email"`
 	Password string `json:"name"`
 }

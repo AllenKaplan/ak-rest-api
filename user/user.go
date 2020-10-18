@@ -1,17 +1,15 @@
 package user
 
-var users []*User
-
 type UserService struct {
 	Database string
 }
 
 type User struct {
-	ID    string `json:"userID"`
-	Name  string `json:"name"`
-	Email string `json:"name"`
+	UserID int    `json:"UserID"`
+	Name   string `json:"Name"`
+	Email  string `json:"Email"`
 }
 
 type UsersResponse struct {
-	Users []*User `json:"users"`
+	Users []*User `json:"Users"`
 }

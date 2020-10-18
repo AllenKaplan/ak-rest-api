@@ -19,10 +19,33 @@ func getUsers(c *gin.Context) {
 }
 
 func createUser(c *gin.Context) {
-	var user *user.User
-	c.ShouldBind(&user)
-	resp, _ := userSrv.Create(user)
-	c.JSON(200, &resp)
+	type createMessage struct {
+		userID   int    `json:"userID"`
+		name     string `json:"name"`
+		email    string `json:"email"`
+		password string `json:"password"`
+	}
+
+	var message *createMessage
+
+	c.ShouldBind(&message)
+
+	user := &user.User{
+		UserID: message.userID,
+		Name:   message.name,
+		Email:  message.email,
+	}
+
+	login := &auth.Login{
+		UserID:   message.userID,
+		Email:    message.email,
+		Password: message.password,
+	}
+
+	_, _ = userSrv.Create(user)
+	token, _ := authSrv.Create(login)
+
+	c.JSON(200, &token)
 }
 
 func login(c *gin.Context) {
@@ -35,6 +58,6 @@ func login(c *gin.Context) {
 func validate(c *gin.Context) {
 	var token *auth.Token
 	c.ShouldBind(&token)
-	resp, _ := authSrv.Validate(token)
+	resp, _ := authSrv.ValidateToken(token)
 	c.JSON(200, &resp)
 }
