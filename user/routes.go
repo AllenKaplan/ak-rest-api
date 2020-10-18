@@ -1,16 +1,11 @@
 package user
 
-import "github.com/gin-gonic/gin"
-
-func (s UserService) Create(c *gin.Context) {
-	var user User
-	c.ShouldBind(&user)
+func (s UserService) Create(user *User) (*User, error) {
 	resp, _ := create(user)
-	c.JSON(200, &resp)
+	return resp, nil
 }
 
-func (s UserService) Get(c *gin.Context) {
+func (s UserService) Get() ([]*User, error) {
 	resp, _ := get()
-
-	c.JSON(200, &resp)
+	return resp, nil
 }

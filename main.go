@@ -1,36 +1,33 @@
 package main
 
 import (
+	auth "github.com/allenkaplan/ak-rest-api/auth"
 	user "github.com/allenkaplan/ak-rest-api/user"
 
 	"github.com/gin-gonic/gin"
 )
 
-var users []*user.User
+var (
+	userSrv *user.UserService
+	authSrv *auth.AuthService
+)
 
 func main() {
-	users = append(users, &user.User{Name: "Eli"})
-
 	r := gin.Default()
 
-	userSrv := &user.UserService{
+	userSrv = &user.UserService{
+		Database: "sql",
+	}
+
+	authSrv = &auth.AuthService{
 		Database: "sql",
 	}
 
 	r.GET("/", homeHandler)
-	r.GET("/user", userSrv.Get)
-	r.POST("/user", userSrv.Create)
-
-	r.GET("/messages", func(c *gin.Context) {
-		message.wshandler(c.Writer, c.Request)
-	})
+	r.GET("/user", getUsers)
+	r.POST("/user", createUser)
+	r.POST("/login", login)
+	r.POST("/auth", validate)
 
 	r.Run(":8080")
-}
-
-func homeHandler(c *gin.Context) {
-	c.JSON(
-		200,
-		gin.H{"message": "hello"},
-	)
 }

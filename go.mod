@@ -3,7 +3,7 @@ module github.com/AllenKaplan/ak-rest-api
 go 1.15
 
 replace github.com/allenkaplan/ak-rest-api/user => ./user
-replace github.com/allenkaplan/ak-rest-api/message => ./message
+replace github.com/allenkaplan/ak-rest-api/auth => ./auth
 
 require (
 	github.com/gin-gonic/gin v1.6.3
@@ -17,7 +17,7 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	github.com/allenkaplan/ak-rest-api/user v1.0.0
-	github.com/allenkaplan/ak-rest-api/message v1.0.0
+	github.com/allenkaplan/ak-rest-api/auth v1.0.0
 	
 )
 
