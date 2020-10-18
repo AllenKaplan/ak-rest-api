@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 )
 
 func (s AuthService) Login(login *Login) (*Token, error) {
@@ -11,7 +12,7 @@ func (s AuthService) Login(login *Login) (*Token, error) {
 		return nil, fmt.Errorf("%v --> %s", err, "error retrieving login")
 	}
 
-	validLogin := retrievedLogin == login
+	validLogin := retrievedLogin.Password == login.Password
 
 	if !validLogin {
 		return nil, errors.New("invalid login")
@@ -31,7 +32,7 @@ func (s AuthService) ValidateToken(token *Token) (bool, error) {
 		return false, fmt.Errorf("%v --> %s", err, "error retrieving token")
 	}
 
-	if token == retrievedToken {
+	if token.TokenID == retrievedToken.TokenID {
 		return true, nil
 	}
 
@@ -53,15 +54,15 @@ func (s AuthService) Create(login *Login) (*Token, error) {
 }
 
 func (s AuthService) generateToken(userID int) (*Token, error) {
-	token := &Token{
-		TokenID: 0,
+	generatedToken := &Token{
+		TokenID: rand.Intn(100000) + 1000000,
 		UserID:  userID,
 		Expiry:  0,
 	}
 
-	_, err := s.storeToken(token)
+	_, err := s.storeToken(generatedToken)
 	if err != nil {
 		return nil, fmt.Errorf("%v --> %s", err, "error storing token")
 	}
-	return token, nil
+	return generatedToken, nil
 }

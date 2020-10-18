@@ -22,11 +22,17 @@ func (s AuthService) getLogin(userID int) (*Login, error) {
 }
 
 func (s AuthService) createLogin(login *Login) (*Login, error) {
+	if logins == nil {
+		logins = make(map[int]*Login)
+	}
 	logins[login.UserID] = login
 	return login, nil
 }
 
 func (s AuthService) storeToken(token *Token) (*Token, error) {
+	if tokens == nil {
+		tokens = make(map[int]*Token)
+	}
 	tokens[token.UserID] = token
 
 	return token, nil

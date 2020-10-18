@@ -5,11 +5,11 @@ type UserService struct {
 }
 
 type User struct {
-	UserID int    `json:"UserID"`
-	Name   string `json:"Name"`
-	Email  string `json:"Email"`
+	UserID int    `json:"userID"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
 }
 
 type UsersResponse struct {
-	Users []*User `json:"Users"`
+	Users []*User `json:"users"`
 }

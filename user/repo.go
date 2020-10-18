@@ -1,13 +1,27 @@
 package user
 
-var users []*User
+import (
+	"math/rand"
+)
+
+var users map[int]*User
 
 func get() ([]*User, error) {
 	//s.db.get
-	return users, nil
+	var userList []*User
+	for _, u := range users {
+		userList = append(userList, u)
+	}
+	return userList, nil
 }
 
 func create(user *User) (*User, error) {
-	users = append(users, user)
+	user.UserID = rand.Intn(100000) + 1000000
+
+	if users == nil {
+		users = make(map[int]*User)
+	}
+
+	users[user.UserID] = user
 	return user, nil
 }

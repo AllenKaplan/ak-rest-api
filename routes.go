@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	auth "github.com/allenkaplan/ak-rest-api/auth"
 	user "github.com/allenkaplan/ak-rest-api/user"
 	"github.com/gin-gonic/gin"
@@ -19,39 +21,46 @@ func getUsers(c *gin.Context) {
 }
 
 func createUser(c *gin.Context) {
-	type createMessage struct {
-		userID   int    `json:"userID"`
+	type CreateMessage struct {
 		name     string `json:"name"`
 		email    string `json:"email"`
 		password string `json:"password"`
 	}
 
-	var message *createMessage
+	var message *CreateMessage
 
 	c.ShouldBind(&message)
 
 	user := &user.User{
-		UserID: message.userID,
-		Name:   message.name,
-		Email:  message.email,
+		Name:  message.name,
+		Email: message.email,
 	}
 
+	userCreated, _ := userSrv.Create(user)
+
 	login := &auth.Login{
-		UserID:   message.userID,
+		UserID:   userCreated.UserID,
 		Email:    message.email,
 		Password: message.password,
 	}
 
-	_, _ = userSrv.Create(user)
 	token, _ := authSrv.Create(login)
 
 	c.JSON(200, &token)
 }
 
 func login(c *gin.Context) {
+	//currently login requires userID --> change with SQL querries
+	// type LoginRequest struct {
+	// 	email    string `json:"email"`
+	// 	password string `json:"password"`
+	// }
 	var login *auth.Login
 	c.ShouldBind(&login)
-	resp, _ := authSrv.Login(login)
+	resp, err := authSrv.Login(login)
+	if err != nil {
+		fmt.Errorf("%v", err)
+	}
 	c.JSON(200, &resp)
 }
 
