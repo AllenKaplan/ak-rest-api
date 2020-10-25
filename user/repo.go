@@ -1,27 +1,25 @@
 package user
 
-import (
-	"math/rand"
-)
+type UserDatabase struct {
+	users map[int]*User
+}
 
-var users map[int]*User
+func NewDatabase() *UserDatabase {
+	return &UserDatabase{
+		users: make(map[int]*User),
+	}
+}
 
-func get() ([]*User, error) {
+func (db *UserDatabase) get() ([]*User, error) {
 	//s.db.get
 	var userList []*User
-	for _, u := range users {
+	for _, u := range db.users {
 		userList = append(userList, u)
 	}
 	return userList, nil
 }
 
-func create(user *User) (*User, error) {
-	user.UserID = rand.Intn(100000) + 1000000
-
-	if users == nil {
-		users = make(map[int]*User)
-	}
-
-	users[user.UserID] = user
+func (db *UserDatabase) create(user *User) (*User, error) {
+	db.users[user.UserID] = user
 	return user, nil
 }

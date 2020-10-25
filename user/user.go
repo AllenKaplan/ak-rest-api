@@ -1,7 +1,13 @@
 package user
 
 type UserService struct {
-	Database string
+	db *UserDatabase
+}
+
+func NewService() *UserService {
+	return &UserService{
+		db: NewDatabase(),
+	}
 }
 
 type User struct {

@@ -1,7 +1,13 @@
 package auth
 
 type AuthService struct {
-	Database string
+	Repo *AuthRepo
+}
+
+func NewService() *AuthService {
+	return &AuthService{
+		Repo: NewAuthRepo(),
+	}
 }
 
 type Token struct {
@@ -14,4 +20,9 @@ type Login struct {
 	UserID   int    `json:"userID"`
 	Email    string `json:"email"`
 	Password string `json:"name"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

@@ -1,43 +1,49 @@
 package auth
 
 import (
-	"golang.org/x/crypto/bcrypt"
+	"errors"
 )
 
-var logins map[int]*Login
-var tokens map[int]*Token
-
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+type AuthRepo struct {
+	LoginRepo map[int]*Login
+	TokenRepo map[int]*Token
 }
 
-func checkPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func (s AuthService) getLogin(userID int) (*Login, error) {
-	return logins[userID], nil
-}
-
-func (s AuthService) createLogin(login *Login) (*Login, error) {
-	if logins == nil {
-		logins = make(map[int]*Login)
+func NewAuthRepo() *AuthRepo {
+	return &AuthRepo{
+		LoginRepo: make(map[int]*Login),
+		TokenRepo: make(map[int]*Token),
 	}
-	logins[login.UserID] = login
+}
+
+//database actions
+
+func (r *AuthRepo) getLogin(email string) (*Login, error) {
+	for userID, login := range r.LoginRepo {
+		if login.Email == email {
+			return r.LoginRepo[userID], nil
+		}
+	}
+
+	return nil, errors.New("Could not find or retirieve user of given email")
+}
+
+func (r *AuthRepo) createLogin(login *Login) (*Login, error) {
+	// fmt.Println("Login being created | ", login.Email)
+	r.LoginRepo[login.UserID] = login
 	return login, nil
 }
 
-func (s AuthService) storeToken(token *Token) (*Token, error) {
-	if tokens == nil {
-		tokens = make(map[int]*Token)
-	}
-	tokens[token.UserID] = token
+func (r *AuthRepo) storeToken(token *Token) (*Token, error) {
+	r.TokenRepo[token.UserID] = token
 
 	return token, nil
 }
 
-func (s AuthService) retrieveToken(userID int) (*Token, error) {
-	return tokens[userID], nil
+func (r *AuthRepo) retrieveToken(userID int) (*Token, error) {
+	resultToken, ok := r.TokenRepo[userID]
+	if !ok {
+		return nil, errors.New("Could not find or retireve token")
+	}
+	return resultToken, nil
 }

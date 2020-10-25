@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// the '/' endpoint
 func homeHandler(c *gin.Context) {
 	c.JSON(
 		200,
@@ -15,51 +16,66 @@ func homeHandler(c *gin.Context) {
 	)
 }
 
+// GET /users
 func getUsers(c *gin.Context) {
-	resp, _ := userSrv.Get()
+	resp, err := userSrv.Get()
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
+
 	c.JSON(200, &resp)
 }
 
+//POST /users
 func createUser(c *gin.Context) {
 	type CreateMessage struct {
-		name     string `json:"name"`
-		email    string `json:"email"`
-		password string `json:"password"`
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	var message *CreateMessage
 
-	c.ShouldBind(&message)
+	err := c.ShouldBind(&message)
 
 	user := &user.User{
-		Name:  message.name,
-		Email: message.email,
+		Name:  message.Name,
+		Email: message.Email,
 	}
 
-	userCreated, _ := userSrv.Create(user)
+	userCreated, err := userSrv.Create(user)
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
 
 	login := &auth.Login{
 		UserID:   userCreated.UserID,
-		Email:    message.email,
-		Password: message.password,
+		Email:    message.Email,
+		Password: message.Password,
 	}
 
-	token, _ := authSrv.Create(login)
+	token, err := authSrv.Create(login)
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
 
 	c.JSON(200, &token)
 }
 
 func login(c *gin.Context) {
-	//currently login requires userID --> change with SQL querries
-	// type LoginRequest struct {
-	// 	email    string `json:"email"`
-	// 	password string `json:"password"`
-	// }
-	var login *auth.Login
+	var login *auth.LoginRequest
+
 	c.ShouldBind(&login)
 	resp, err := authSrv.Login(login)
 	if err != nil {
-		fmt.Errorf("%v", err)
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
 	}
 	c.JSON(200, &resp)
 }
@@ -67,6 +83,10 @@ func login(c *gin.Context) {
 func validate(c *gin.Context) {
 	var token *auth.Token
 	c.ShouldBind(&token)
-	resp, _ := authSrv.ValidateToken(token)
+	resp, err := authSrv.ValidateToken(token)
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
 	c.JSON(200, &resp)
 }

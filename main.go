@@ -13,21 +13,16 @@ var (
 )
 
 func main() {
-	r := gin.Default()
+	router := gin.Default()
 
-	userSrv = &user.UserService{
-		Database: "sql",
-	}
+	userSrv = user.NewService()
+	authSrv = auth.NewService()
 
-	authSrv = &auth.AuthService{
-		Database: "sql",
-	}
+	router.GET("/", homeHandler)
+	router.GET("/user", getUsers)
+	router.POST("/user", createUser)
+	router.POST("/login", login)
+	router.POST("/auth", validate)
 
-	r.GET("/", homeHandler)
-	r.GET("/user", getUsers)
-	r.POST("/user", createUser)
-	r.POST("/login", login)
-	r.POST("/auth", validate)
-
-	r.Run(":8080")
+	router.Run(":8080")
 }
