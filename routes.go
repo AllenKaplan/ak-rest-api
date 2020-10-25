@@ -58,40 +58,51 @@ func createUser(c *gin.Context) {
 		Password: message.Password,
 	}
 
-	token, err := authSrv.Create(login)
+	jwt, err := authSrv.Create(login)
 
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
 	}
 
-	c.JSON(200, &token)
+	resp := &auth.Token{
+		Email: login.Email,
+		Token: jwt,
+	}
+
+	c.JSON(200, &resp)
 }
 
 func login(c *gin.Context) {
 	var login *auth.LoginRequest
 
 	c.ShouldBind(&login)
-	resp, err := authSrv.Login(login)
+	jwt, err := authSrv.Login(login)
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
 	}
+
+	resp := &auth.Token{
+		Email: login.Email,
+		Token: jwt,
+	}
+
 	c.JSON(200, &resp)
 }
 
 func validate(c *gin.Context) {
-	type ValidateRequest struct {
-		Email string `json:"email"`
-		Token string `json:"token"`
-	}
-
-	var request *ValidateRequest
+	var request *auth.Token
 	c.ShouldBind(&request)
 
 	resp, err := authSrv.ValidateToken(request.Email, request.Token)
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
+
+	if resp != true {
+		c.JSON(401, fmt.Sprintf("%s", "Invalid Token"))
 		return
 	}
 

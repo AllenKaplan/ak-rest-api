@@ -44,7 +44,8 @@ func (s *AuthService) ValidateToken(email, token string) (bool, error) {
 		return true, nil
 	}
 
-	return false, fmt.Errorf("%s", "could not validate token")
+	// return false, fmt.Errorf("%s", "could not validate token")
+	return false, nil
 }
 
 func (s *AuthService) Create(login *Login) (string, error) {
