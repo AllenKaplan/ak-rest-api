@@ -81,12 +81,19 @@ func login(c *gin.Context) {
 }
 
 func validate(c *gin.Context) {
-	var token *auth.Token
-	c.ShouldBind(&token)
-	resp, err := authSrv.ValidateToken(token)
+	type ValidateRequest struct {
+		Email string `json:"email"`
+		Token string `json:"token"`
+	}
+
+	var request *ValidateRequest
+	c.ShouldBind(&request)
+
+	resp, err := authSrv.ValidateToken(request.Email, request.Token)
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
 	}
+
 	c.JSON(200, &resp)
 }

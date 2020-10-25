@@ -1,5 +1,9 @@
 package auth
 
+import (
+	"github.com/dgrijalva/jwt-go"
+)
+
 type AuthService struct {
 	Repo *AuthRepo
 }
@@ -10,10 +14,9 @@ func NewService() *AuthService {
 	}
 }
 
-type Token struct {
-	UserID  int
-	TokenID int
-	Expiry  int
+type Claims struct {
+	Email string
+	jwt.StandardClaims
 }
 
 type Login struct {
