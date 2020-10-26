@@ -10,7 +10,17 @@ func (s *UserService) Create(user *User) (*User, error) {
 	return resp, nil
 }
 
-func (s *UserService) Get() ([]*User, error) {
-	resp, _ := s.db.get()
+func (s *UserService) Update(user *User) (*User, error) {
+	resp, _ := s.db.update(user)
+	return resp, nil
+}
+
+func (s *UserService) GetAllUsers() ([]*User, error) {
+	resp, _ := s.db.getAllUsers()
+	return resp, nil
+}
+
+func (s *UserService) Get(userID int) (*User, error) {
+	resp, _ := s.db.get(userID)
 	return resp, nil
 }

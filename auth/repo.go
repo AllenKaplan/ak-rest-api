@@ -28,7 +28,12 @@ func (r *AuthRepo) getLogin(email string) (*Login, error) {
 	return nil, errors.New("Could not find or retirieve user of given email")
 }
 
-func (r *AuthRepo) createLogin(login *Login) (*Login, error) {
+func (r *AuthRepo) update(login *Login) (bool, error) {
+	r.LoginRepo[login.UserID] = login
+	return true, nil
+}
+
+func (r *AuthRepo) create(login *Login) (*Login, error) {
 	// fmt.Println("Login being created | ", login.Email)
 	r.LoginRepo[login.UserID] = login
 	return login, nil

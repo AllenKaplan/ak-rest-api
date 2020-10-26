@@ -5,65 +5,95 @@ import (
 	"fmt"
 )
 
-func (s *AuthService) Login(login *LoginRequest) (string, error) {
+func (s *AuthService) Login(login *LoginRequest) (*Token, error) {
 	//find user based on email
 	retrievedLogin, err := s.Repo.getLogin(login.Email)
 	if err != nil {
-		return "", fmt.Errorf("%v --> %s", err, "error retrieving login")
+		return nil, fmt.Errorf("%v --> %s", err, "error retrieving login")
 	}
 
 	//validate snubmitted password is the retrievedLogin pw
 	validLogin := retrievedLogin.Password == login.Password
 	if !validLogin {
-		return "", errors.New("invalid login")
+		return nil, errors.New("invalid login")
 	}
 
 	//check if token exists
-	token, _ := s.Repo.retrieveToken(login.Email)
+	jwt, _ := s.Repo.retrieveToken(login.Email)
 
 	//if no token exists generate
-	if token == "" {
-		token, err = s.generateToken(login.Email)
+	if jwt == "" {
+		jwt, err = s.generateToken(retrievedLogin.UserID, retrievedLogin.Email)
 		if err != nil {
-			return "", fmt.Errorf("%v --> %s", err, "error generating token")
+			return nil, fmt.Errorf("%v --> %s", err, "error generating token")
 		}
 	}
 
+	token := &Token{
+		ID:    retrievedLogin.UserID,
+		Email: retrievedLogin.Email,
+		Token: jwt,
+	}
+
 	return token, nil
 }
 
-func (s *AuthService) ValidateToken(email, token string) (bool, error) {
+func (s *AuthService) ValidateToken(email, token string) (*Claims, error) {
 	//retrieve token from cache
 	retrievedToken, err := s.Repo.retrieveToken(email)
 	if err != nil {
-		return false, fmt.Errorf("%v --> %s", err, "error retrieving token")
+		return nil, fmt.Errorf("%v --> %s", err, "error retrieving token")
 	}
 
 	//compare sentToken and retrievedToken
-	if token == retrievedToken {
-		return true, nil
+	if token != retrievedToken {
+		return nil, errors.New("Token not the same as previously stored; may be expired")
 	}
 
-	// return false, fmt.Errorf("%s", "could not validate token")
-	return false, nil
+	//get claims
+	claims, err := claimsFromToken(token)
+	if err != nil {
+		return nil, fmt.Errorf("%v --> %s", err, "error retrieving claims")
+	}
+
+	if claims.Email != email {
+
+	}
+
+	return claims, nil
 }
 
-func (s *AuthService) Create(login *Login) (string, error) {
-	_, err := s.Repo.createLogin(login)
+func (s *AuthService) Create(login *Login) (*Token, error) {
+	retrievedLogin, err := s.Repo.create(login)
 	if err != nil {
-		return "", fmt.Errorf("%v --> %s", err, "error creating login")
+		return nil, fmt.Errorf("%v --> %s", err, "error creating login")
 	}
 
-	token, err := s.generateToken(login.Email)
+	jwt, err := s.generateToken(login.UserID, login.Email)
 	if err != nil {
-		return "", fmt.Errorf("%v --> %s", err, "error generating token")
+		return nil, fmt.Errorf("%v --> %s", err, "error generating token")
+	}
+
+	token := &Token{
+		ID:    retrievedLogin.UserID,
+		Email: retrievedLogin.Email,
+		Token: jwt,
 	}
 
 	return token, nil
 }
 
-func (s *AuthService) generateToken(email string) (string, error) {
-	generatedToken, err := createJWT(email)
+func (s *AuthService) Update(login *Login) (bool, error) {
+	updateSuccess, err := s.Repo.update(login)
+	if err != nil {
+		return false, fmt.Errorf("%v --> %s", err, "error creating login")
+	}
+
+	return updateSuccess, nil
+}
+
+func (s *AuthService) generateToken(userID int, email string) (string, error) {
+	generatedToken, err := createJWT(userID, email)
 	if err != nil {
 		return "", fmt.Errorf("%v --> %s", err, "error generating token")
 	}

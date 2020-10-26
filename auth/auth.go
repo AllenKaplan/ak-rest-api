@@ -15,12 +15,14 @@ func NewService() *AuthService {
 }
 
 type Token struct {
+	ID    int    `json:"id"`
 	Email string `json:"email"`
 	Token string `json:"token"`
 }
 
 type Claims struct {
-	Email string
+	UserID int    `json:"id"`
+	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 

@@ -10,7 +10,7 @@ func NewDatabase() *UserDatabase {
 	}
 }
 
-func (db *UserDatabase) get() ([]*User, error) {
+func (db *UserDatabase) getAllUsers() ([]*User, error) {
 	//s.db.get
 	var userList []*User
 	for _, u := range db.users {
@@ -19,7 +19,19 @@ func (db *UserDatabase) get() ([]*User, error) {
 	return userList, nil
 }
 
+func (db *UserDatabase) get(userID int) (*User, error) {
+	//s.db.get
+	var user *User
+	user = db.users[userID]
+	return user, nil
+}
+
 func (db *UserDatabase) create(user *User) (*User, error) {
+	db.users[user.UserID] = user
+	return user, nil
+}
+
+func (db *UserDatabase) update(user *User) (*User, error) {
 	db.users[user.UserID] = user
 	return user, nil
 }

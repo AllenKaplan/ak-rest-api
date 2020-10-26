@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	auth "github.com/allenkaplan/ak-rest-api/auth"
 	user "github.com/allenkaplan/ak-rest-api/user"
@@ -17,8 +18,21 @@ func homeHandler(c *gin.Context) {
 }
 
 // GET /users
-func getUsers(c *gin.Context) {
-	resp, err := userSrv.Get()
+func getAllUsers(c *gin.Context) {
+	resp, err := userSrv.GetAllUsers()
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+	}
+
+	c.JSON(200, &resp)
+}
+
+// GET /users/:id
+func getUser(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	resp, err := userSrv.Get(id)
 
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
@@ -58,16 +72,44 @@ func createUser(c *gin.Context) {
 		Password: message.Password,
 	}
 
-	jwt, err := authSrv.Create(login)
+	resp, err := authSrv.Create(login)
 
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
 	}
 
-	resp := &auth.Token{
-		Email: login.Email,
-		Token: jwt,
+	c.JSON(200, &resp)
+}
+
+//PUT /user
+func updateUser(c *gin.Context) {
+	var user *user.User
+
+	err := c.ShouldBind(&user)
+
+	resp, err := userSrv.Update(user)
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
+
+	}
+
+	c.JSON(200, &resp)
+}
+
+//PUT /login
+func updateLogin(c *gin.Context) {
+	var login *auth.Login
+
+	err := c.ShouldBind(&login)
+
+	resp, err := authSrv.Update(login)
+
+	if err != nil {
+		c.JSON(500, fmt.Sprintf("%v", err))
+		return
 	}
 
 	c.JSON(200, &resp)
@@ -77,15 +119,12 @@ func login(c *gin.Context) {
 	var login *auth.LoginRequest
 
 	c.ShouldBind(&login)
-	jwt, err := authSrv.Login(login)
+
+	resp, err := authSrv.Login(login)
+
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
-	}
-
-	resp := &auth.Token{
-		Email: login.Email,
-		Token: jwt,
 	}
 
 	c.JSON(200, &resp)
@@ -98,11 +137,6 @@ func validate(c *gin.Context) {
 	resp, err := authSrv.ValidateToken(request.Email, request.Token)
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
-		return
-	}
-
-	if resp != true {
-		c.JSON(401, fmt.Sprintf("%s", "Invalid Token"))
 		return
 	}
 

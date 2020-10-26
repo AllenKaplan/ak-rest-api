@@ -19,10 +19,12 @@ func main() {
 	authSrv = auth.NewService()
 
 	router.GET("/", homeHandler)
-	router.GET("/user", getUsers)
+	router.GET("/user", auth.CheckJWT(), getAllUsers)
+	router.GET("/user/:id", auth.CheckJWT(), getUser)
+	router.PUT("/user", auth.CheckJWT(), updateUser)
 	router.POST("/user", createUser)
 	router.POST("/login", login)
-	router.POST("/auth", validate)
+	router.POST("/auth", auth.CheckJWT(), validate)
 
 	router.Run(":8080")
 }
