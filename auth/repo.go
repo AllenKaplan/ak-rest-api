@@ -6,13 +6,13 @@ import (
 
 type AuthRepo struct {
 	LoginRepo map[int]*Login
-	TokenRepo map[int]string
+	TokenRepo map[int]*StoredToken
 }
 
 func NewAuthRepo() *AuthRepo {
 	return &AuthRepo{
 		LoginRepo: make(map[int]*Login),
-		TokenRepo: make(map[int]string),
+		TokenRepo: make(map[int]*StoredToken),
 	}
 }
 
@@ -39,16 +39,19 @@ func (r *AuthRepo) create(login *Login) (*Login, error) {
 	return login, nil
 }
 
-func (r *AuthRepo) storeToken(userID int, jwt string) (string, error) {
-	r.TokenRepo[userID] = jwt
+func (r *AuthRepo) storeToken(userID int, expiry int64, jwt string) (string, error) {
+	r.TokenRepo[userID] = &StoredToken{
+		Token:  jwt,
+		Expiry: expiry,
+	}
 
 	return jwt, nil
 }
 
-func (r *AuthRepo) retrieveToken(userID int) (string, error) {
+func (r *AuthRepo) retrieveToken(userID int) (*StoredToken, error) {
 	jwt, ok := r.TokenRepo[userID]
 	if !ok {
-		return "", errors.New("Could not find or retireve token")
+		return nil, errors.New("Could not find or retireve token")
 	}
 	return jwt, nil
 }

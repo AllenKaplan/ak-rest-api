@@ -145,7 +145,7 @@ func login(c *gin.Context) {
 }
 
 func validate(c *gin.Context) {
-	var request *auth.Token
+	var request *auth.AuthRequest
 	c.ShouldBind(&request)
 
 	idFromToken := c.GetInt("userID")

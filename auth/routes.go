@@ -3,9 +3,10 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
-func (s *AuthService) Login(login *LoginRequest) (*Token, error) {
+func (s *AuthService) Login(login *LoginRequest) (*AuthResponse, error) {
 	//find user based on email
 	retrievedLogin, err := s.Repo.getLogin(login.Email)
 	if err != nil {
@@ -18,20 +19,28 @@ func (s *AuthService) Login(login *LoginRequest) (*Token, error) {
 		return nil, errors.New("invalid login")
 	}
 
-	//check if token exists
-	jwt, err := s.Repo.retrieveToken(retrievedLogin.UserID)
-
-	//if no token exists generate
-	if err != nil {
-		if err != nil {
-			return nil, fmt.Errorf("%v --> %s", err, "auth.routes.Login")
-		}
+	//retrieve existing token
+	storedToken, err := s.Repo.retrieveToken(retrievedLogin.UserID)
+	if err != nil { //token does not exist or error retrieving
+		//handle by generating new token
+		storedToken, err = s.generateToken(retrievedLogin.UserID)
+		//return nil, fmt.Errorf("%v --> %s", err, "auth.routes.Login")
 	}
 
-	token := &Token{
-		ID:    retrievedLogin.UserID,
-		Email: retrievedLogin.Email,
-		Token: jwt,
+	//check if token is expired
+	//currently check is to take the generated token and retrieve claims for expiry
+	//correct implementation will have jwt.expiry in redis so no call to get claims
+	if err != nil {
+		return nil, fmt.Errorf("%v --> Error getting claims --> %s", err, "auth.routes.Login")
+	}
+	if storedToken.Expiry < time.Now().Unix() { //if expired, generate new jwt
+		storedToken, err = s.generateToken(retrievedLogin.UserID)
+	}
+
+	token := &AuthResponse{
+		ID:          retrievedLogin.UserID,
+		Email:       retrievedLogin.Email,
+		StoredToken: storedToken,
 	}
 
 	return token, nil
@@ -45,7 +54,7 @@ func (s *AuthService) ValidateToken(userID int, token string) (*Claims, error) {
 	}
 
 	//compare sentToken and retrievedToken
-	if token != retrievedToken {
+	if token != retrievedToken.Token {
 		return nil, errors.New("Token not the same as previously stored; may be expired")
 	}
 
@@ -62,21 +71,21 @@ func (s *AuthService) ValidateToken(userID int, token string) (*Claims, error) {
 	return claims, nil
 }
 
-func (s *AuthService) Create(login *Login) (*Token, error) {
+func (s *AuthService) Create(login *Login) (*AuthResponse, error) {
 	retrievedLogin, err := s.Repo.create(login)
 	if err != nil {
 		return nil, fmt.Errorf("%v --> %s", err, "error creating login")
 	}
 
-	jwt, err := s.generateToken(login.UserID, login.Email)
+	tokenToStore, err := s.generateToken(login.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("%v --> %s", err, "error generating token")
 	}
 
-	token := &Token{
-		ID:    retrievedLogin.UserID,
-		Email: retrievedLogin.Email,
-		Token: jwt,
+	token := &AuthResponse{
+		ID:          retrievedLogin.UserID,
+		Email:       retrievedLogin.Email,
+		StoredToken: tokenToStore,
 	}
 
 	return token, nil
@@ -97,14 +106,21 @@ func (s *AuthService) Update(userID int, loginRequest *LoginRequest) (bool, erro
 	return updateSuccess, nil
 }
 
-func (s *AuthService) generateToken(userID int, email string) (string, error) {
-	generatedToken, err := createJWT(userID, email)
+func (s *AuthService) generateToken(userID int) (*StoredToken, error) {
+	generatedToken, expiry, err := createJWT(userID)
 	if err != nil {
-		return "", fmt.Errorf("%v --> %s", err, "error generating token")
+		return nil, fmt.Errorf("%v --> %s", err, "error generating token")
 	}
-	_, err = s.Repo.storeToken(userID, generatedToken)
+
+	_, err = s.Repo.storeToken(userID, expiry, generatedToken)
 	if err != nil {
-		return "", fmt.Errorf("%v --> %s", err, "error storing token")
+		return nil, fmt.Errorf("%v --> %s", err, "error storing token")
 	}
-	return generatedToken, nil
+
+	token := &StoredToken{
+		Token:  generatedToken,
+		Expiry: expiry,
+	}
+
+	return token, nil
 }
