@@ -21,8 +21,8 @@ type Token struct {
 }
 
 type Claims struct {
-	UserID int    `json:"id"`
-	Email  string `json:"email"`
+	UserID int `json:"id"`
+	// Email  string `json:"email"`
 	jwt.StandardClaims
 }
 

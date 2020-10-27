@@ -19,13 +19,12 @@ func (s *AuthService) Login(login *LoginRequest) (*Token, error) {
 	}
 
 	//check if token exists
-	jwt, _ := s.Repo.retrieveToken(login.Email)
+	jwt, err := s.Repo.retrieveToken(retrievedLogin.UserID)
 
 	//if no token exists generate
-	if jwt == "" {
-		jwt, err = s.generateToken(retrievedLogin.UserID, retrievedLogin.Email)
+	if err != nil {
 		if err != nil {
-			return nil, fmt.Errorf("%v --> %s", err, "error generating token")
+			return nil, fmt.Errorf("%v --> %s", err, "auth.routes.Login")
 		}
 	}
 
@@ -38,9 +37,9 @@ func (s *AuthService) Login(login *LoginRequest) (*Token, error) {
 	return token, nil
 }
 
-func (s *AuthService) ValidateToken(email, token string) (*Claims, error) {
+func (s *AuthService) ValidateToken(userID int, token string) (*Claims, error) {
 	//retrieve token from cache
-	retrievedToken, err := s.Repo.retrieveToken(email)
+	retrievedToken, err := s.Repo.retrieveToken(userID)
 	if err != nil {
 		return nil, fmt.Errorf("%v --> %s", err, "error retrieving token")
 	}
@@ -56,8 +55,8 @@ func (s *AuthService) ValidateToken(email, token string) (*Claims, error) {
 		return nil, fmt.Errorf("%v --> %s", err, "error retrieving claims")
 	}
 
-	if claims.Email != email {
-
+	if userID != claims.UserID {
+		return nil, errors.New("UserID different than token claim")
 	}
 
 	return claims, nil
@@ -83,7 +82,13 @@ func (s *AuthService) Create(login *Login) (*Token, error) {
 	return token, nil
 }
 
-func (s *AuthService) Update(login *Login) (bool, error) {
+func (s *AuthService) Update(userID int, loginRequest *LoginRequest) (bool, error) {
+	login := &Login{
+		UserID:   userID,
+		Email:    loginRequest.Email,
+		Password: loginRequest.Password,
+	}
+
 	updateSuccess, err := s.Repo.update(login)
 	if err != nil {
 		return false, fmt.Errorf("%v --> %s", err, "error creating login")
@@ -97,7 +102,7 @@ func (s *AuthService) generateToken(userID int, email string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("%v --> %s", err, "error generating token")
 	}
-	_, err = s.Repo.storeToken(email, generatedToken)
+	_, err = s.Repo.storeToken(userID, generatedToken)
 	if err != nil {
 		return "", fmt.Errorf("%v --> %s", err, "error storing token")
 	}

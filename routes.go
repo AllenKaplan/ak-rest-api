@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -32,6 +33,13 @@ func getAllUsers(c *gin.Context) {
 // GET /users/:id
 func getUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
+
+	idFromToken := c.GetInt("userID")
+	if idFromToken != id {
+		c.JSON(401, fmt.Sprintf("%v", errors.New("UserID does not match claim from token")))
+		return
+	}
+
 	resp, err := userSrv.Get(id)
 
 	if err != nil {
@@ -88,24 +96,30 @@ func updateUser(c *gin.Context) {
 
 	err := c.ShouldBind(&user)
 
-	resp, err := userSrv.Update(user)
+	idFromToken := c.GetInt("userID")
+	if idFromToken != user.UserID {
+		c.JSON(401, fmt.Sprintf("%v", errors.New("UserID adoes not match claims from token")))
+		return
+	}
+
+	updatedUser, err := userSrv.Update(user)
 
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return
-
 	}
 
-	c.JSON(200, &resp)
+	c.JSON(200, &updatedUser)
 }
 
 //PUT /login
 func updateLogin(c *gin.Context) {
-	var login *auth.Login
-
+	var login *auth.LoginRequest
 	err := c.ShouldBind(&login)
 
-	resp, err := authSrv.Update(login)
+	idFromToken := c.GetInt("userID")
+
+	resp, err := authSrv.Update(idFromToken, login)
 
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
@@ -134,7 +148,9 @@ func validate(c *gin.Context) {
 	var request *auth.Token
 	c.ShouldBind(&request)
 
-	resp, err := authSrv.ValidateToken(request.Email, request.Token)
+	idFromToken := c.GetInt("userID")
+
+	resp, err := authSrv.ValidateToken(idFromToken, request.Token)
 	if err != nil {
 		c.JSON(500, fmt.Sprintf("%v", err))
 		return

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	jwtMiddleware "github.com/auth0/go-jwt-middleware"
@@ -23,10 +24,9 @@ func checkPasswordHash(password, hash string) bool {
 
 // CreateJWT func will used to create the JWT while signing in and signing out
 func createJWT(userID int, email string) (response string, err error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(7 * 24 * 60 * time.Minute)
 	claims := &Claims{
 		UserID: userID,
-		Email:  email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -45,12 +45,12 @@ func createJWT(userID int, email string) (response string, err error) {
 func claimsFromToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecretKey, nil
 	})
 
-	if token == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("%v --> %s", err, "auth.utils.claimsFromToken")
 	}
 
 	return claims, nil
@@ -68,11 +68,12 @@ func CheckJWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwtMid := *myJwtMiddleware
 		if err := jwtMid.CheckJWT(c.Writer, c.Request); err != nil {
+			fmt.Printf("%s", "JWT not valid lol")
 			c.AbortWithStatus(401)
+			return
 		}
 		token, _ := jwtMiddleware.FromAuthHeader(c.Request)
 		claims, _ := claimsFromToken(token)
 		c.Set("userID", claims.UserID)
-		c.Set("email", claims.Email)
 	}
 }
